@@ -122,6 +122,9 @@ func (daemon *Daemon) containerStart(container *container.Container, checkpoint 
 
 			container.Reset(false)
 
+			logrus.Debugf("[containerStart] err:%v container:%v skip daemon.Cleanup()", err, container)
+			return
+
 			daemon.Cleanup(container)
 			// if containers AutoRemove flag is set, remove it after clean up
 			if container.HostConfig.AutoRemove {
