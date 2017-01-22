@@ -290,6 +290,10 @@ func (ls *layerStore) registerWithDescriptor(ts io.Reader, parent ChainID, descr
 	defer func() {
 		if err != nil {
 			logrus.Debugf("Cleaning up layer %s: %v", layer.cacheID, err)
+
+			logrus.Debugf("[registerWithDescriptor] skip ls.driver.Remove()")
+			return
+
 			if err := ls.driver.Remove(layer.cacheID); err != nil {
 				logrus.Errorf("Error cleaning up cache layer %s: %v", layer.cacheID, err)
 			}

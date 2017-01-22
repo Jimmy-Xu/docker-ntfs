@@ -603,7 +603,10 @@ func (devices *DeviceSet) createFilesystem(info *devInfo) (err error) {
 		}
 	}()
 
+	logrus.Debugf("[createFilesystem] devices.filesystem:%v args:%v", devices.filesystem, args)
 	switch devices.filesystem {
+	case "ntfs-3g":
+		err = exec.Command("mkfs.ntfs", args...).Run()
 	case "xfs":
 		err = exec.Command("mkfs.xfs", args...).Run()
 	case "ext4":
@@ -1199,7 +1202,12 @@ func (devices *DeviceSet) growFS(info *devInfo) error {
 
 	defer syscall.Unmount(fsMountPoint, syscall.MNT_DETACH)
 
+	logrus.Debugf("[growFS] devices.BaseDeviceFilesystem: %v info.DevName():%v", devices.BaseDeviceFilesystem, info.DevName())
 	switch devices.BaseDeviceFilesystem {
+	case "ntfs-3g":
+		if out, err := exec.Command("ntfsresize", info.DevName()).CombinedOutput(); err != nil {
+			return fmt.Errorf("Failed to grow rootfs:%v:%s", err, string(out))
+		}
 	case "ext4":
 		if out, err := exec.Command("resize2fs", info.DevName()).CombinedOutput(); err != nil {
 			return fmt.Errorf("Failed to grow rootfs:%v:%s", err, string(out))
@@ -2371,6 +2379,7 @@ func (devices *DeviceSet) MountDevice(hash, path, mountLabel string) error {
 	options = joinMountOptions(options, devices.mountOptions)
 	options = joinMountOptions(options, label.FormatMountLabel("", mountLabel))
 
+	logrus.Debugf("[MountDevice] hash:%v - info.DevName():%v, path:%v, fstype:%v, options:%v", hash, info.DevName(), path, fstype, options)
 	if err := mount.Mount(info.DevName(), path, fstype, options); err != nil {
 		return fmt.Errorf("devmapper: Error mounting '%s' on '%s': %s", info.DevName(), path, err)
 	}
@@ -2642,7 +2651,7 @@ func NewDeviceSet(root string, doInit bool, options []string, uidMaps, gidMaps [
 			}
 			devices.metaDataLoopbackSize = size
 		case "dm.fs":
-			if val != "ext4" && val != "xfs" {
+			if val != "ext4" && val != "xfs" && val != "ntfs-3g" {
 				return nil, fmt.Errorf("devmapper: Unsupported filesystem %s\n", val)
 			}
 			devices.filesystem = val
