@@ -867,11 +867,13 @@ func (daemon *Daemon) Mount(container *container.Container) error {
 
 // Unmount unsets the container base filesystem
 func (daemon *Daemon) Unmount(container *container.Container) error {
+	logrus.Debugf("[Unmount] Begin - container:%v", container.ID)
+	//[Important] UnmountDevice, deactivateDevice, removeDevice, deactivateDevice
 	if err := container.RWLayer.Unmount(); err != nil {
 		logrus.Errorf("Error unmounting container %s: %s", container.ID, err)
 		return err
 	}
-
+	logrus.Debugf("[Unmount] End - container:%v", container.ID)
 	return nil
 }
 

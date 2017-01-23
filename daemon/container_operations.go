@@ -885,6 +885,7 @@ func (daemon *Daemon) getNetworkedContainer(containerID, connectedContainerID st
 }
 
 func (daemon *Daemon) releaseNetwork(container *container.Container) {
+	logrus.Debugf("[releaseNetwork] Begin - container:%v", container.ID)
 	start := time.Now()
 	if daemon.netController == nil {
 		return
@@ -940,6 +941,7 @@ func (daemon *Daemon) releaseNetwork(container *container.Container) {
 		daemon.LogNetworkEventWithAttributes(nw, "disconnect", attributes)
 	}
 	networkActions.WithValues("release").UpdateSince(start)
+	logrus.Debugf("[releaseNetwork] End - container:%v", container.ID)
 }
 
 func errRemovalContainer(containerID string) error {

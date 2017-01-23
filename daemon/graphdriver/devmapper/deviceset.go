@@ -603,7 +603,7 @@ func (devices *DeviceSet) createFilesystem(info *devInfo) (err error) {
 		}
 	}()
 
-	logrus.Debugf("[createFilesystem] devices.filesystem:%v args:%v", devices.filesystem, args)
+	logrus.Debugf("[deviceset.go/createFilesystem] devices.filesystem:%v args:%v", devices.filesystem, args)
 	switch devices.filesystem {
 	case "ntfs-3g":
 		err = exec.Command("mkfs.ntfs", args...).Run()
@@ -1202,7 +1202,7 @@ func (devices *DeviceSet) growFS(info *devInfo) error {
 
 	defer syscall.Unmount(fsMountPoint, syscall.MNT_DETACH)
 
-	logrus.Debugf("[growFS] devices.BaseDeviceFilesystem: %v info.DevName():%v", devices.BaseDeviceFilesystem, info.DevName())
+	logrus.Debugf("[deviceset.go/growFS] devices.BaseDeviceFilesystem: %v info.DevName():%v", devices.BaseDeviceFilesystem, info.DevName())
 	switch devices.BaseDeviceFilesystem {
 	case "ntfs-3g":
 		if out, err := exec.Command("ntfsresize", info.DevName()).CombinedOutput(); err != nil {
@@ -2345,6 +2345,7 @@ func (devices *DeviceSet) xfsSetNospaceRetries(info *devInfo) error {
 
 // MountDevice mounts the device if not already mounted.
 func (devices *DeviceSet) MountDevice(hash, path, mountLabel string) error {
+	logrus.Debugf("[deviceset.go/MountDevice] Begin - hash:%v path:%v mountLabel:%v", hash, path, mountLabel)
 	info, err := devices.lookupDeviceWithLock(hash)
 	if err != nil {
 		return err
@@ -2360,9 +2361,14 @@ func (devices *DeviceSet) MountDevice(hash, path, mountLabel string) error {
 	devices.Lock()
 	defer devices.Unlock()
 
+	logrus.Debugf("[deviceset.go/MountDevice] Before - activateDeviceIfNeeded info:%v", info)
 	if err := devices.activateDeviceIfNeeded(info, false); err != nil {
 		return fmt.Errorf("devmapper: Error activating devmapper device for '%s': %s", hash, err)
 	}
+	logrus.Debugf("[deviceset.go/MountDevice] After - activateDeviceIfNeeded info:%v", info)
+
+	////[debug] just active device, skip mount
+	//return nil
 
 	fstype, err := ProbeFsType(info.DevName())
 	if err != nil {
@@ -2379,10 +2385,11 @@ func (devices *DeviceSet) MountDevice(hash, path, mountLabel string) error {
 	options = joinMountOptions(options, devices.mountOptions)
 	options = joinMountOptions(options, label.FormatMountLabel("", mountLabel))
 
-	logrus.Debugf("[MountDevice] hash:%v - info.DevName():%v, path:%v, fstype:%v, options:%v", hash, info.DevName(), path, fstype, options)
+	logrus.Debugf("[deviceset.go/MountDevice] Before mount.Mount - hash:%v - info.DevName():%v, path:%v, fstype:%v, options:%v", hash, info.DevName(), path, fstype, options)
 	if err := mount.Mount(info.DevName(), path, fstype, options); err != nil {
 		return fmt.Errorf("devmapper: Error mounting '%s' on '%s': %s", info.DevName(), path, err)
 	}
+	logrus.Debugf("[deviceset.go/MountDevice] After mount.Mount - hash:%v - info.DevName():%v, path:%v, fstype:%v, options:%v", hash, info.DevName(), path, fstype, options)
 
 	if fstype == "xfs" && devices.xfsNospaceRetries != "" {
 		if err := devices.xfsSetNospaceRetries(info); err != nil {
@@ -2391,7 +2398,7 @@ func (devices *DeviceSet) MountDevice(hash, path, mountLabel string) error {
 			return err
 		}
 	}
-
+	logrus.Debugf("[deviceset.go/MountDevice] End - hash:%v path:%v mountLabel:%v", hash, path, mountLabel)
 	return nil
 }
 
@@ -2417,10 +2424,12 @@ func (devices *DeviceSet) UnmountDevice(hash, mountPath string) error {
 	}
 	logrus.Debug("devmapper: Unmount done")
 
-	if err := devices.deactivateDevice(info); err != nil {
-		return err
-	}
-
+	//[Important] delete device
+	logrus.Debugf("[deviceset.go/UnmountDevice] Before devices.deactivateDevice, hash:%v mountPath:%v info:%v", hash, mountPath, info)
+	//if err := devices.deactivateDevice(info); err != nil {
+	//	return err
+	//}
+	logrus.Debugf("[deviceset.go/UnmountDevice] After devices.deactivateDevice, hash:%v mountPath:%v info:%v", hash, mountPath, info)
 	return nil
 }
 

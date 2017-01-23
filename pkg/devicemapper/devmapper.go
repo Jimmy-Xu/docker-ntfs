@@ -171,7 +171,7 @@ func TaskCreateNamed(t TaskType, name string) (*Task, error) {
 	case 18:
 		taskType = "deviceSetGeometry"
 	}
-	logrus.Debugf("[TaskCreateNamed] Begin TaskType:%v name:%v", taskType, name)
+	logrus.Debugf("[devmapper.go/TaskCreateNamed] Begin TaskType:%v name:%v", taskType, name)
 	task := TaskCreate(t)
 	if task == nil {
 		return nil, fmt.Errorf("devicemapper: Can't create task of type %d", int(t))
@@ -179,7 +179,7 @@ func TaskCreateNamed(t TaskType, name string) (*Task, error) {
 	if err := task.setName(name); err != nil {
 		return nil, fmt.Errorf("devicemapper: Can't set task name %s", name)
 	}
-	logrus.Debugf("[TaskCreateNamed] End TaskType:%v name:%v", taskType, name)
+	logrus.Debugf("[devmapper.go/TaskCreateNamed] End TaskType:%v name:%v", taskType, name)
 	return task, nil
 }
 
@@ -440,7 +440,7 @@ func CancelDeferredRemove(deviceName string) error {
 		return fmt.Errorf("devicemapper: Can't set sector %s", err)
 	}
 
-	logrus.Debugf("[CancelDeferredRemove] setMessage:%v",fmt.Sprintf("@cancel_deferred_remove"))
+	logrus.Debugf("[devmapper.go/CancelDeferredRemove] setMessage:%v",fmt.Sprintf("@cancel_deferred_remove"))
 	if err := task.setMessage(fmt.Sprintf("@cancel_deferred_remove")); err != nil {
 		return fmt.Errorf("devicemapper: Can't set message %s", err)
 	}
@@ -672,7 +672,7 @@ func SetTransactionID(poolName string, oldID uint64, newID uint64) error {
 		return fmt.Errorf("devicemapper: Can't set sector %s", err)
 	}
 
-	logrus.Debugf("[SetTransationID] setMessage: %v", fmt.Sprintf("set_transaction_id %d %d", oldID, newID))
+	logrus.Debugf("[devmapper.go/SetTransationID] setMessage: %v", fmt.Sprintf("set_transaction_id %d %d", oldID, newID))
 	if err := task.setMessage(fmt.Sprintf("set_transaction_id %d %d", oldID, newID)); err != nil {
 		return fmt.Errorf("devicemapper: Can't set message %s", err)
 	}
@@ -729,7 +729,7 @@ func CreateDevice(poolName string, deviceID int) error {
 		return fmt.Errorf("devicemapper: Can't set sector %s", err)
 	}
 
-	logrus.Debugf("[CreateDevice] setMessage:%v", fmt.Sprintf("create_thin %d", deviceID))
+	logrus.Debugf("[devmapper.go/CreateDevice] setMessage:%v", fmt.Sprintf("create_thin %d", deviceID))
 	if err := task.setMessage(fmt.Sprintf("create_thin %d", deviceID)); err != nil {
 		return fmt.Errorf("devicemapper: Can't set message %s", err)
 	}
@@ -758,7 +758,7 @@ func DeleteDevice(poolName string, deviceID int) error {
 		return fmt.Errorf("devicemapper: Can't set sector %s", err)
 	}
 
-	logrus.Debugf("[DeleteDevice] setMessage:%v", fmt.Sprintf("delete %d", deviceID))
+	logrus.Debugf("[devmapper.go/DeleteDevice] setMessage:%v", fmt.Sprintf("delete %d", deviceID))
 	if err := task.setMessage(fmt.Sprintf("delete %d", deviceID)); err != nil {
 		return fmt.Errorf("devicemapper: Can't set message %s", err)
 	}
@@ -786,6 +786,7 @@ func ActivateDeviceWithExternal(poolName string, name string, deviceID int, size
 }
 
 func activateDevice(poolName string, name string, deviceID int, size uint64, external string) error {
+	logrus.Debugf("[devmapper.go/activateDevice] Begin - poolName:%v name:%v deviceID:%v size:%v external:%v", poolName, name, deviceID, size, external)
 	task, err := TaskCreateNamed(deviceCreate, name)
 	if task == nil {
 		return err
@@ -814,7 +815,7 @@ func activateDevice(poolName string, name string, deviceID int, size uint64, ext
 	if err := task.run(); err != nil {
 		return fmt.Errorf("devicemapper: Error running deviceCreate (ActivateDevice) %s", err)
 	}
-
+	logrus.Debugf("[devmapper.go/activateDevice] End - poolName:%v name:%v deviceID:%v size:%v external:%v", poolName, name, deviceID, size, external)
 	return nil
 }
 
@@ -829,7 +830,7 @@ func CreateSnapDeviceRaw(poolName string, deviceID int, baseDeviceID int) error 
 		return fmt.Errorf("devicemapper: Can't set sector %s", err)
 	}
 
-	logrus.Debugf("[CreateSnapDeviceRaw] setMessage:%v", fmt.Sprintf("create_snap %d %d", deviceID, baseDeviceID))
+	logrus.Debugf("[devmapper.go/CreateSnapDeviceRaw] setMessage:%v", fmt.Sprintf("create_snap %d %d", deviceID, baseDeviceID))
 	if err := task.setMessage(fmt.Sprintf("create_snap %d %d", deviceID, baseDeviceID)); err != nil {
 		return fmt.Errorf("devicemapper: Can't set message %s", err)
 	}

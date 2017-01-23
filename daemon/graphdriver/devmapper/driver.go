@@ -214,14 +214,18 @@ func (d *Driver) Get(id, mountLabel string) (string, error) {
 
 // Put unmounts a device and removes it.
 func (d *Driver) Put(id string) error {
+	logrus.Debugf("[devmapper/driver.go/Put] Begin - Put unmounts a device and removes it, id:%v", id)
 	mp := path.Join(d.home, "mnt", id)
 	if count := d.ctr.Decrement(mp); count > 0 {
 		return nil
 	}
+	logrus.Debugf("[devmapper/driver.go/Put] Begin - d.DeviceSet.UnmountDevice() id:%v mp:%v", id, mp)
 	err := d.DeviceSet.UnmountDevice(id, mp)
 	if err != nil {
 		logrus.Errorf("devmapper: Error unmounting device %s: %s", id, err)
 	}
+	logrus.Debugf("[devmapper/driver.go/Put] After - d.DeviceSet.UnmountDevice() id:%v mp:%v", id, mp)
+	logrus.Debugf("[devmapper/driver.go/Put] End - Put unmounts a device and removes it, id:%v", id)
 	return err
 }
 

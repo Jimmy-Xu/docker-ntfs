@@ -12,10 +12,12 @@ func mount(device, target, mType string, flag uintptr, data string) error {
 	logrus.Infof("[mount] Before mount device:%v, target:%v, mType:%v, flag:%v, data:%v", device, target, mType, flag, data)
 	if mType == "ntfs-3g" {
 		args := []string{}
+		args = append(args, "-t", mType)
 		args = append(args, device)
 		args = append(args, target)
-		if err := exec.Command("/sbin/mount.ntfs-3g", args...).Run(); err != nil {
-			logrus.Infof("[mount] After mount.ntfs-3g err:%v", err)
+		logrus.Infof("[mount] command line: /bin/mount %v", args)
+		if err := exec.Command("/bin/mount", args...).Run(); err != nil {
+			logrus.Infof("[mount] After mount ntfs-3g err:%v", err)
 			return err
 		}
 	} else if err := syscall.Mount(device, target, mType, flag, data); err != nil {

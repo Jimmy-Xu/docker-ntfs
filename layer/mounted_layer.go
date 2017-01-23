@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/docker/docker/pkg/archive"
+	"github.com/Sirupsen/logrus"
 )
 
 type mountedLayer struct {
@@ -95,5 +96,6 @@ func (rl *referencedRWLayer) Mount(mountLabel string) (string, error) {
 // Unmount decrements the activity count and unmounts the underlying layer
 // Callers should only call `Unmount` once per call to `Mount`, even on error.
 func (rl *referencedRWLayer) Unmount() error {
+	logrus.Debugf("[mounted_layer.go/Unmount] rl.path:%v rl.mountID:%v rl.name:%v", rl.path, rl.mountID, rl.name)
 	return rl.layerStore.driver.Put(rl.mountedLayer.mountID)
 }

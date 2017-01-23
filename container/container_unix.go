@@ -215,6 +215,7 @@ func (container *Container) HasMountFor(path string) bool {
 
 // UnmountIpcMounts uses the provided unmount function to unmount shm and mqueue if they were mounted
 func (container *Container) UnmountIpcMounts(unmount func(pth string) error) {
+	logrus.Debugf("[UnmountIpcMounts] Begin")
 	if container.HostConfig.IpcMode.IsContainer() || container.HostConfig.IpcMode.IsHost() {
 		return
 	}
@@ -237,6 +238,7 @@ func (container *Container) UnmountIpcMounts(unmount func(pth string) error) {
 	if len(warnings) > 0 {
 		logrus.Warnf("failed to cleanup ipc mounts:\n%v", strings.Join(warnings, "\n"))
 	}
+	logrus.Debugf("[UnmountIpcMounts] End")
 }
 
 // IpcMounts returns the list of IPC mounts
@@ -271,13 +273,14 @@ func (container *Container) SecretMount() *Mount {
 
 // UnmountSecrets unmounts the local tmpfs for secrets
 func (container *Container) UnmountSecrets() error {
+	logrus.Debugf("[UnmountSecrets] Begin - container:%v", container.ID)
 	if _, err := os.Stat(container.SecretMountPath()); err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
 	}
-
+	logrus.Debugf("[UnmountSecrets] End - container:%v", container.ID)
 	return detachMounted(container.SecretMountPath())
 }
 

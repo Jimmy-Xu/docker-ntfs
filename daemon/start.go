@@ -122,8 +122,8 @@ func (daemon *Daemon) containerStart(container *container.Container, checkpoint 
 
 			container.Reset(false)
 
-			logrus.Debugf("[containerStart] err:%v container:%v skip daemon.Cleanup()", err, container)
-			return
+			//logrus.Debugf("[containerStart] err:%v container:%v skip daemon.Cleanup()", err, container)
+			//return
 
 			daemon.Cleanup(container)
 			// if containers AutoRemove flag is set, remove it after clean up
@@ -204,30 +204,46 @@ func (daemon *Daemon) containerStart(container *container.Container, checkpoint 
 // Cleanup releases any network resources allocated to the container along with any rules
 // around how containers are linked together.  It also unmounts the container's root filesystem.
 func (daemon *Daemon) Cleanup(container *container.Container) {
+	logrus.Debugf("[Cleanup] Begin - container:%v", container.ID)
+
 	daemon.releaseNetwork(container)
 
 	container.UnmountIpcMounts(detachMounted)
 
+	//[Important] UnmountDevice, deactivateDevice, removeDevice, deactivateDevice
+	logrus.Debugf("[Cleanup] Before daemon.conditionalUnmountOnCleanup() container:%v", container.ID)
 	if err := daemon.conditionalUnmountOnCleanup(container); err != nil {
 		// FIXME: remove once reference counting for graphdrivers has been refactored
 		// Ensure that all the mounts are gone
 		if mountid, err := daemon.layerStore.GetMountID(container.ID); err == nil {
+			logrus.Debugf("[Cleanup] Before daemon.cleanupMountsByID() mountid:%v", mountid)
 			daemon.cleanupMountsByID(mountid)
+			logrus.Debugf("[Cleanup] After daemon.cleanupMountsByID() mountid:%v", mountid)
 		}
 	}
+	logrus.Debugf("[Cleanup] After daemon.conditionalUnmountOnCleanup() container:%v", container.ID)
 
+	logrus.Debugf("[Cleanup] Before container.UnmountSecrets() container:%v", container.ID)
 	if err := container.UnmountSecrets(); err != nil {
 		logrus.Warnf("%s cleanup: failed to unmount secrets: %s", container.ID, err)
 	}
 
+	logrus.Debugf("[Cleanup] container.ExecCommands.Commands():%v", container.ExecCommands.Commands())
 	for _, eConfig := range container.ExecCommands.Commands() {
+		logrus.Debugf("[Cleanup] Before - unregisterExecCommand - container:%v eConfig:%v", container.ID, eConfig)
 		daemon.unregisterExecCommand(container, eConfig)
+		logrus.Debugf("[Cleanup] After - unregisterExecCommand - container:%v eConfig:%v", container.ID, eConfig)
 	}
 
+	logrus.Debugf("[Cleanup] container.BaseFS:%v", container.BaseFS)
 	if container.BaseFS != "" {
+		logrus.Debugf("[Cleanup] Before - UnmountVolumes - container:%v BaseFS:%v", container.ID, container.BaseFS)
 		if err := container.UnmountVolumes(daemon.LogVolumeEvent); err != nil {
 			logrus.Warnf("%s cleanup: Failed to umount volumes: %v", container.ID, err)
 		}
+		logrus.Debugf("[Cleanup] After - UnmountVolumes - container:%v BaseFS:%v", container.ID, container.BaseFS)
 	}
+	logrus.Debugf("[Cleanup] Before container.CancelAttachContext()")
 	container.CancelAttachContext()
+	logrus.Debugf("[Cleanup] End - container:%v", container.ID)
 }
