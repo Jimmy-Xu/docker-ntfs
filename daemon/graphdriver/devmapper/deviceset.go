@@ -1023,8 +1023,8 @@ func (devices *DeviceSet) loadMetadata(hash string) *devInfo {
 
 func getDeviceUUID(device string) (string, error) {
 	offset, err := findNTFS(device)
-	logrus.Debugf("[deviceset.go/getDeviceUUID] cmd: blkid -s UUID -o value -O %v %v", offset, device)
-	out, err := exec.Command("blkid", "-s", "UUID", "-o", "value", "-O", offset, device).Output()
+	logrus.Debugf("[deviceset.go/getDeviceUUID] cmd: blkid -p -s UUID -o value -O %v %v", offset, device)
+	out, err := exec.Command("blkid", "-p", "-s", "UUID", "-o", "value", "-O", offset, device).Output()
 	if err != nil {
 		return "", fmt.Errorf("devmapper: Failed to find uuid for device %s:%v", device, err)
 	}
@@ -1085,8 +1085,17 @@ func (devices *DeviceSet) verifyBaseDeviceUUIDFS(baseInfo *devInfo) error {
 
 	uuid := ""
 	var err error
-	if devices.filesystem == "ntfs-3g" {
-		uuid, err = getDeviceUUID(baseInfo.DevName() + "1")
+
+	dev_base1 := baseInfo.DevName() + "1"
+	_, err = devicemapper.GetInfo(dev_base1)
+
+	if devices.filesystem == "ntfs-3g" && err == nil {
+		//dev_base1 exist
+		logrus.Debugf("[deviceset.go/verifyBaseDeviceUUIDFS] getDeviceUUID %v", dev_base1)
+		uuid, err = getDeviceUUID(dev_base1)
+		if err != nil {
+			logrus.Debugf("[deviceset.go/verifyBaseDeviceUUIDFS] getDeviceUUID %v failed, Error:%v", dev_base1, err)
+		}
 	} else {
 		uuid, err = getDeviceUUID(baseInfo.DevName())
 	}
@@ -2245,8 +2254,15 @@ func (devices *DeviceSet) deactivateDevice(info *devInfo) error {
 		}
 	} else {
 		if devices.filesystem == "ntfs-3g" {
-			if err := devices.removeDevice(info.Name() + "1"); err != nil {
-				return err
+			dev_base1 := info.Name() + "1"
+			_, err = devicemapper.GetInfo(dev_base1)
+			if err == nil {
+				logrus.Debugf("[deviceset.go/deactivateDevice] find device :%v", dev_base1)
+				if err := devices.removeDevice(dev_base1); err != nil {
+					return err
+				}
+			} else {
+				logrus.Debugf("[deviceset.go/deactivateDevice] removeDevice %v failed, error:%v", dev_base1, err)
 			}
 		}
 		if err := devices.removeDevice(info.Name()); err != nil {
