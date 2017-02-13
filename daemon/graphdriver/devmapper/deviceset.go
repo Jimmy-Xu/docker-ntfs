@@ -616,7 +616,7 @@ func (devices *DeviceSet) createFilesystem(info *devInfo) (err error) {
 			return err
 		}
 		//mkfs
-		logrus.Debugf("[deviceset.go/createFilesystem] mkfs, cmd: mkfs.ntfs %v", args)
+		logrus.Debugf("[deviceset.go/createFilesystem] mkfs cmd: mkfs.ntfs %s", args)
 		out, err := exec.Command("mkfs.ntfs", args...).Output()
 		logrus.Debugf("[deviceset.go/createFilesystem] mkfs result: %s", out)
 		if err != nil {
@@ -643,10 +643,8 @@ func (devices *DeviceSet) createFilesystem(info *devInfo) (err error) {
 func makeGPT(devname string) (err error) {
 	//create gpt table
 	args := []string{}
-	args = append(args, devname)
-	args = append(args, "mklabel")
-	args = append(args, "gpt")
-	logrus.Debugf("[deviceset.go/makeGPT] create gpt table, cmd: parted %v", args)
+	args = append(args, devname, "mklabel","gpt")
+	logrus.Debugf("[deviceset.go/makeGPT] create gpt table, cmd: parted %s", args)
 	out, err := exec.Command("parted", args...).Output()
 	logrus.Debugf("[deviceset.go/makeGPT] create gpt table result: %s", out)
 	if err != nil {
@@ -656,13 +654,8 @@ func makeGPT(devname string) (err error) {
 
 	//create ntfs partition
 	args = []string{}
-	args = append(args, devname)
-	args = append(args, "mkpart")
-	args = append(args, "primary")
-	args = append(args, "ntfs")
-	args = append(args, "1MiB")
-	args = append(args, "100%")
-	logrus.Debugf("[deviceset.go/makeGPT] create ntfs partition, cmd: parted %v", args)
+	args = append(args, devname, "mkpart", "primary", "ntfs", "1MiB", "100%")
+	logrus.Debugf("[deviceset.go/makeGPT] create ntfs partition, cmd: parted %s", args)
 	out, err = exec.Command("parted", args...).Output()
 	logrus.Debugf("[deviceset.go/makeGPT] create ntfs partition result: %s", out)
 	if err != nil {
@@ -672,9 +665,8 @@ func makeGPT(devname string) (err error) {
 
 	//check gpt table
 	args = []string{}
-	args = append(args, "-l")
-	args = append(args, devname)
-	logrus.Debugf("[deviceset.go/makeGPT] check disk, cmd: gdisk %v", args)
+	args = append(args, "-l", devname)
+	logrus.Debugf("[deviceset.go/makeGPT] check disk, cmd: gdisk %s", args)
 	out, err = exec.Command("gdisk", args...).Output()
 	logrus.Debugf("[deviceset.go/makeGPT] check disk result: %s", out)
 	return err
