@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+
 	"github.com/Sirupsen/logrus"
 )
 
@@ -47,7 +48,7 @@ func ProbeFsType(device string) (string, error) {
 		{"btrfs", "_BHRfS_M", 0x10040},
 		{"ext4", "\123\357", 0x438},
 		{"xfs", "XFSB", 0},
-		{"ntfs-3g", "NTFS", 0x100003},
+		{"ntfs-3g", "NTFS", 0x16800003},
 	}
 
 	maxLen := uint64(0)
