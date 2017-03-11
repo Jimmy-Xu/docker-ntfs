@@ -48,7 +48,7 @@ func ProbeFsType(device string) (string, error) {
 		{"btrfs", "_BHRfS_M", 0x10040},
 		{"ext4", "\123\357", 0x438},
 		{"xfs", "XFSB", 0},
-		{"ntfs-3g", "NTFS", 0x16800003},
+		{"ntfs-3g", "NTFS", 0x0e400003}, //0x0e400000 + 3
 	}
 
 	maxLen := uint64(0)
